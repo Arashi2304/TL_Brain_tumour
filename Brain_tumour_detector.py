@@ -95,6 +95,7 @@ def create_model():
     detection_model = keras.Sequential([
         base_model,
         keras.layers.Flatten(),
+        keras.layers.Dense(256, activation='relu'),
         keras.layers.Dense(128, activation='relu'),
         keras.layers.Dense(1, activation='sigmoid')
     ])
