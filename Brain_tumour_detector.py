@@ -104,7 +104,7 @@ def create_model():
     
     return detection_model, base_model
 
-def train_model(detection_model, base_model, X_train, y_train, X_val, y_val):
+def train_model(detection_model, base_model, X_train, y_train, X_val, y_val, fine_tune=False):
     '''
     Trains the model.
     
@@ -134,15 +134,19 @@ def train_model(detection_model, base_model, X_train, y_train, X_val, y_val):
     '''
     history_pre = detection_model.fit(X_train, y_train, epochs=10, validation_data=(X_val, y_val))
     
-    for layer in base_model.layers[:10]:
-        layer.trainable = True
+    if fine_tune:
+        for layer in base_model.layers[:10]:
+            layer.trainable = True
 
-    detection_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    history_post = detection_model.fit(X_train, y_train, epochs=5, validation_data=(X_val, y_val))
+        detection_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        history_post = detection_model.fit(X_train, y_train, epochs=5, validation_data=(X_val, y_val))
+        
+        return detection_model, history_pre, history_post
     
-    return detection_model, history_pre, history_post
+    else:
+        return detection_model, history_pre, None
 
-def plot_statistics(history_pre, history_post, detection_model, X_val, y_val, save_path_statistics='Figures/statistics.png', save_path_cm='Figures/confusion_matrix.png'):
+def plot_statistics(history_pre, history_post, detection_model, X_val, y_val, fine_tune=False, save_path_statistics='Figures/statistics.png', save_path_cm='Figures/confusion_matrix.png'):
     '''
     Function to plot the accuracy and loss of the model before and after fine-tuning, and the confusion matrix.
     
@@ -174,18 +178,9 @@ def plot_statistics(history_pre, history_post, detection_model, X_val, y_val, sa
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
-    
-    # Plot accuracy from the second training session (fine-tuning)
-    plt.subplot(2, 2, 2)
-    plt.plot(history_post.history['accuracy'], label='Train (After Fine-tuning)')
-    plt.plot(history_post.history['val_accuracy'], label='Validation (After Fine-tuning)')
-    plt.title('Model Accuracy (After Fine-tuning)')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
 
     # Plot loss from the first training session
-    plt.subplot(2, 2, 3)
+    plt.subplot(2, 2, 2)
     plt.plot(history_pre.history['loss'], label='Train (Before Fine-tuning)')
     plt.plot(history_pre.history['val_loss'], label='Validation (Before Fine-tuning)')
     plt.title('Model Loss (Before Fine-tuning)')
@@ -193,14 +188,24 @@ def plot_statistics(history_pre, history_post, detection_model, X_val, y_val, sa
     plt.ylabel('Loss')
     plt.legend()
     
-    # Plot loss from the second training session (fine-tuning)
-    plt.subplot(2, 2, 4)
-    plt.plot(history_post.history['loss'], label='Train (After Fine-tuning)')
-    plt.plot(history_post.history['val_loss'], label='Validation (After Fine-tuning)')
-    plt.title('Model Loss (After Fine-tuning)')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
+    if fine_tune:
+        # Plot accuracy from the second training session (fine-tuning)
+        plt.subplot(2, 2, 3)
+        plt.plot(history_post.history['accuracy'], label='Train (After Fine-tuning)')
+        plt.plot(history_post.history['val_accuracy'], label='Validation (After Fine-tuning)')
+        plt.title('Model Accuracy (After Fine-tuning)')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend()
+        
+        # Plot loss from the second training session (fine-tuning)
+        plt.subplot(2, 2, 4)
+        plt.plot(history_post.history['loss'], label='Train (After Fine-tuning)')
+        plt.plot(history_post.history['val_loss'], label='Validation (After Fine-tuning)')
+        plt.title('Model Loss (After Fine-tuning)')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
     
     plt.tight_layout()
     plt.savefig(save_path_statistics)
@@ -220,7 +225,7 @@ if __name__ == '__main__':
     
     # Initializing and training the model
     detection_model, base_model = create_model()
-    detection_model, history_pre, history_post = train_model(detection_model, base_model, X_train, y_train, X_val, y_val)
+    detection_model, history_pre, history_post = train_model(detection_model, base_model, X_train, y_train, X_val, y_val, fine_tune=True)
     
     # Plotting statistics
-    plot_statistics(history_pre, history_post, detection_model, X_val, y_val)
+    plot_statistics(history_pre, history_post, detection_model, X_val, y_val, fine_tune=True)
