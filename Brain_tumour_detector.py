@@ -225,7 +225,7 @@ if __name__ == '__main__':
     
     # Initializing and training the model
     detection_model, base_model = create_model()
-    detection_model, history_pre, history_post = train_model(detection_model, base_model, X_train, y_train, X_val, y_val, fine_tune=True)
+    detection_model, history_pre, history_post = train_model(detection_model, base_model, X_train, y_train, X_val, y_val)
     
     # Plotting statistics
-    plot_statistics(history_pre, history_post, detection_model, X_val, y_val, fine_tune=True)
+    plot_statistics(history_pre, history_post, detection_model, X_val, y_val)
